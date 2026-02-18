@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambola Caller</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Tambola Caller</h1>
+      <p>Draw numbers from 1 to 90 and track every call in real time.</p>
+    </header>
+
+    <section class="controls">
+      <button id="nextBtn">Call Next Number</button>
+      <button id="autoBtn" class="secondary">Start Auto Call</button>
+      <button id="resetBtn" class="danger">Reset Game</button>
+    </section>
+
+    <section class="status">
+      <div>
+        <h2>Current Number</h2>
+        <p id="currentNumber" class="current">--</p>
+      </div>
+      <div>
+        <h2>Called</h2>
+        <p id="count">0 / 90</p>
+      </div>
+      <div>
+        <h2>Remaining</h2>
+        <p id="remaining">90</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Recently Called</h2>
+      <ul id="history" class="history"></ul>
+    </section>
+
+    <section>
+      <h2>Board</h2>
+      <div id="board" class="board" aria-label="Tambola board numbers"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

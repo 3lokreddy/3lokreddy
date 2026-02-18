@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sheroes Trends | Sarees & Stitched Blouses</title>
+    <meta
+      name="description"
+      content="Sheroes Trends showcase: premium sarees and stitched blouses with prices."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -15,76 +19,117 @@
   <body>
     <header class="hero">
       <nav class="nav container">
-        <div class="brand">Sheroes Trends</div>
-        <a class="cta" href="#collection">Shop Collection</a>
+        <a class="brand" href="#top">Sheroes Trends</a>
+        <div class="nav-links">
+          <a href="#sarees">Sarees</a>
+          <a href="#blouses">Blouses</a>
+          <a class="cta" href="#contact">Order on WhatsApp</a>
+        </div>
       </nav>
-      <section class="hero-content container">
+
+      <section class="hero-content container" id="top">
         <p class="tagline">Grace Woven for Every Celebration</p>
-        <h1>Showcase of Sarees & Stitched Blouses</h1>
+        <h1>Premium Sarees & Stitched Blouses</h1>
         <p>
-          Explore elegant sarees and ready-to-wear stitched blouses curated for
-          weddings, festive occasions, and everyday style.
+          Discover festive silks, elegant organzas, and ready-to-wear blouses
+          crafted to flatter every occasion.
         </p>
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="#collection">Explore Collection</a>
+          <a class="btn btn-outline" href="#contact">Book a Video Call</a>
+        </div>
       </section>
     </header>
 
     <main id="collection" class="container">
-      <section>
+      <section class="highlights" aria-label="Store highlights">
+        <article>
+          <h3>Free Alterations</h3>
+          <p>One complimentary fit correction on all stitched blouse orders.</p>
+        </article>
+        <article>
+          <h3>Pan-India Shipping</h3>
+          <p>Fast dispatch within 48 hours for ready stock designs.</p>
+        </article>
+        <article>
+          <h3>Handpicked Designs</h3>
+          <p>Curated seasonal edits for weddings, parties, and workwear.</p>
+        </article>
+      </section>
+
+      <section id="sarees">
         <div class="section-head">
           <h2>Sarees</h2>
-          <p>Classic drapes in silk, chiffon, organza, and cotton blends.</p>
+          <p>Classic drapes in silk, chiffon, organza, and woven blends.</p>
         </div>
         <div class="product-grid">
           <article class="card">
+            <div class="thumb saree-1" aria-hidden="true"></div>
             <h3>Kanjivaram Silk Saree</h3>
             <p>Rich zari border with peacock motifs in royal maroon.</p>
-            <span class="price">₹5,499</span>
+            <div class="meta"><span class="chip">Wedding</span><span class="price">₹5,499</span></div>
           </article>
           <article class="card">
+            <div class="thumb saree-2" aria-hidden="true"></div>
             <h3>Banarasi Brocade Saree</h3>
             <p>Intricate gold brocade with a soft satin finish.</p>
-            <span class="price">₹4,299</span>
+            <div class="meta"><span class="chip">Festive</span><span class="price">₹4,299</span></div>
           </article>
           <article class="card">
+            <div class="thumb saree-3" aria-hidden="true"></div>
             <h3>Floral Organza Saree</h3>
             <p>Lightweight organza with pastel floral thread work.</p>
-            <span class="price">₹2,799</span>
+            <div class="meta"><span class="chip">Party Wear</span><span class="price">₹2,799</span></div>
           </article>
           <article class="card">
+            <div class="thumb saree-4" aria-hidden="true"></div>
             <h3>Printed Chiffon Saree</h3>
             <p>Airy drape with contemporary abstract print design.</p>
-            <span class="price">₹1,999</span>
+            <div class="meta"><span class="chip">Daily Wear</span><span class="price">₹1,999</span></div>
           </article>
         </div>
       </section>
 
-      <section>
+      <section id="blouses">
         <div class="section-head">
           <h2>Stitched Blouses</h2>
-          <p>Tailored fits with modern cuts and handcrafted detailing.</p>
+          <p>Tailored silhouettes with modern cuts and handcrafted detailing.</p>
         </div>
         <div class="product-grid">
           <article class="card">
+            <div class="thumb blouse-1" aria-hidden="true"></div>
             <h3>Mirror Work Party Blouse</h3>
             <p>Elbow sleeves and sweetheart neckline with mirror accents.</p>
-            <span class="price">₹1,499</span>
+            <div class="meta"><span class="chip">Size 34-42</span><span class="price">₹1,499</span></div>
           </article>
           <article class="card">
+            <div class="thumb blouse-2" aria-hidden="true"></div>
             <h3>Velvet Embroidered Blouse</h3>
             <p>Deep back cut with hand embroidery in antique gold thread.</p>
-            <span class="price">₹1,899</span>
+            <div class="meta"><span class="chip">Bridal</span><span class="price">₹1,899</span></div>
           </article>
           <article class="card">
+            <div class="thumb blouse-3" aria-hidden="true"></div>
             <h3>Cotton Everyday Blouse</h3>
             <p>Breathable stitched blouse with princess cut and side zip.</p>
-            <span class="price">₹899</span>
+            <div class="meta"><span class="chip">Office Wear</span><span class="price">₹899</span></div>
           </article>
           <article class="card">
+            <div class="thumb blouse-4" aria-hidden="true"></div>
             <h3>Sequin Designer Blouse</h3>
-            <p>Shimmer finish with padded fit and contemporary sleeve style.</p>
-            <span class="price">₹2,199</span>
+            <p>Shimmer finish with padded fit and modern sleeve styling.</p>
+            <div class="meta"><span class="chip">Cocktail</span><span class="price">₹2,199</span></div>
           </article>
         </div>
+      </section>
+
+      <section class="contact" id="contact">
+        <h2>Ready to Order?</h2>
+        <p>
+          Share your preferred design, size, and delivery city with Sheroes
+          Trends.
+        </p>
+        <a class="btn btn-solid" href="https://wa.me/919999999999" target="_blank" rel="noreferrer">Chat on WhatsApp</a>
       </section>
     </main>
 

@@ -1,54 +1,53 @@
-# Agentic AI for iOS App Development
+# Agentic AI for iOS App Development (Employee-Style)
 
-This repository now contains an **implementation-ready Agentic iOS framework** you can use to autonomously build iOS apps with SwiftUI + MVVM.
+This repository contains an implementation-ready **Agentic iOS framework** where AI agents work like employees with distinct roles, handoffs, and voice-transcripted collaboration.
 
 ## What is included
 
 - `agentic-ios/AGENT_SYSTEM_PROMPT.md`  
-  A system prompt that enforces architecture, quality gates, lifecycle handling, and delivery output format.
+  A system prompt for a 10-agent iOS org with architecture and quality enforcement.
+
+- `agentic-ios/agents/employee_org.json`  
+  Ten AI employee roles, reporting lines, and handoff relationships.
 
 - `agentic-ios/workflows/ios_app_delivery_workflow.md`  
-  An end-to-end delivery workflow from intake to post-release.
+  End-to-end app delivery flow from intake to post-release.
 
-- `agentic-ios/templates/project_blueprint.json`  
-  A machine-readable blueprint for scalable iOS project structure.
+- `agentic-ios/workflows/employee_interaction_protocol.md`  
+  Rules for standups, handoffs, escalation, and voice transcript governance.
+
+- `agentic-ios/transcripts/voice_transcript_schema.md`  
+  Transcript schema for voice conversation records.
+
+- `agentic-ios/transcripts/sample_transcripts.json`  
+  Sample meeting transcript demonstrating cross-agent communication.
+
+- `agentic-ios/templates/project_blueprint.json` (+ YAML companion)  
+  Machine-readable blueprint for project structure and quality gates.
 
 - `agentic-ios/tools/generate_ios_scaffold.py`  
-  A generator script that creates an iOS folder/file scaffold from the blueprint.
+  Scaffold generator for production-style iOS project folders/files.
+
+- `agentic-ios/tools/conversation_lookup.py`  
+  Search utility for transcript look-through by speaker, tag, or query.
 
 ## Quick start
 
 ```bash
 python3 agentic-ios/tools/generate_ios_scaffold.py --app-name TaskManager --output ./generated
+python3 agentic-ios/tools/conversation_lookup.py --speaker TechLeadAgent
+python3 agentic-ios/tools/conversation_lookup.py --tag release
+python3 agentic-ios/tools/conversation_lookup.py --query IOS-12
 ```
 
-This creates:
+## How to run your employee-style agent system
 
-```text
-generated/TaskManager/
-  Core/
-  Features/
-  Shared/
-  Models/
-  Resources/
-  ...starter Swift files
-```
+1. Use `agentic-ios/AGENT_SYSTEM_PROMPT.md` as system instructions.
+2. Load roles from `agentic-ios/agents/employee_org.json`.
+3. Force all progress updates through `employee_interaction_protocol.md`.
+4. Persist transcripts with `voice_transcript_schema.md`.
+5. Query conversation history with `conversation_lookup.py`.
 
-## How to use this with an AI agent
+## Suggested first request
 
-1. Use `AGENT_SYSTEM_PROMPT.md` as the system instructions.
-2. Feed your app idea and requirements.
-3. Ask the agent to execute the workflow in `workflows/ios_app_delivery_workflow.md`.
-4. Optionally bootstrap with `generate_ios_scaffold.py`.
-
-## Suggested first request to your agent
-
-> Build a Task Manager iOS app for iOS 17+ using SwiftUI and MVVM. Follow the provided workflow and scaffold. Include loading/empty/error states, local persistence, and unit tests for view models.
-
----
-
-If you want, I can next extend this with:
-- CI/CD (GitHub Actions + fastlane)
-- Unit test template generation
-- App Store release checklist generator
-- Feature module templates (Auth, Dashboard, Settings, Tasks)
+> Build a Task Manager iOS app for iOS 17+ using SwiftUI and MVVM. Run in employee mode with all 10 agents, produce handoff transcripts, and include searchable meeting logs.

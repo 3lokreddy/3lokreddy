@@ -1,5 +1,14 @@
 # iOS Delivery Workflow (Agent-Operated)
 
+
+## Team Operating Model
+- ProgramManagerAgent coordinates milestones and assigns owners.
+- ProductStrategistAgent + UXDesignerAgent define stories and UX flows.
+- TechLeadAgent governs architecture and implementation sequencing.
+- Engineering agents (SwiftUI, Networking, DataPersistence) execute build tasks.
+- QALeadAgent, SecurityComplianceAgent, and ReleaseManagerAgent close quality + release gates.
+- Every phase must emit transcript entries for auditability.
+
 ## 0) Intake
 - Capture app idea in one sentence.
 - Define user personas and top 3 jobs-to-be-done.

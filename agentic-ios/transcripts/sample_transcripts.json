@@ -1,0 +1,212 @@
+[
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:00:00Z",
+    "speaker_agent_id": "ProgramManagerAgent",
+    "speaker_role": "Program Manager",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 18,
+      "confidence": 0.98
+    },
+    "text": "Team, today we begin MVP sprint. Product Strategist, please confirm the scope.",
+    "tags": [
+      "kickoff",
+      "scope",
+      "mvp"
+    ],
+    "linked_items": [
+      "ticket:IOS-1"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:01:00Z",
+    "speaker_agent_id": "ProductStrategistAgent",
+    "speaker_role": "Product Strategist",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 22,
+      "confidence": 0.97
+    },
+    "text": "MVP includes authentication, task CRUD, and dashboard analytics summary.",
+    "tags": [
+      "requirements",
+      "mvp",
+      "features"
+    ],
+    "linked_items": [
+      "doc:prd-v1"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:02:00Z",
+    "speaker_agent_id": "UXDesignerAgent",
+    "speaker_role": "UX/UI Designer",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 20,
+      "confidence": 0.96
+    },
+    "text": "I will deliver low-fidelity flow for onboarding and task creation by end of day.",
+    "tags": [
+      "design",
+      "handoff",
+      "onboarding"
+    ],
+    "linked_items": [
+      "doc:ux-flow-v1"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:03:00Z",
+    "speaker_agent_id": "TechLeadAgent",
+    "speaker_role": "iOS Tech Lead",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 24,
+      "confidence": 0.99
+    },
+    "text": "Architecture is SwiftUI plus MVVM with Core, Features, Shared, Models, and Resources modules.",
+    "tags": [
+      "architecture",
+      "mvvm",
+      "standards"
+    ],
+    "linked_items": [
+      "doc:architecture-v1"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:04:00Z",
+    "speaker_agent_id": "SwiftUIEngineerAgent",
+    "speaker_role": "SwiftUI Engineer",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 15,
+      "confidence": 0.95
+    },
+    "text": "I will implement navigation, list screen, and loading-empty-error view states.",
+    "tags": [
+      "implementation",
+      "ui",
+      "state-management"
+    ],
+    "linked_items": [
+      "ticket:IOS-8"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:05:00Z",
+    "speaker_agent_id": "NetworkingAgent",
+    "speaker_role": "API & Networking Engineer",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 19,
+      "confidence": 0.97
+    },
+    "text": "Network manager will use URLSession with timeout, retry, and centralized error mapping.",
+    "tags": [
+      "network",
+      "errors",
+      "retry"
+    ],
+    "linked_items": [
+      "ticket:IOS-12"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:06:00Z",
+    "speaker_agent_id": "DataPersistenceAgent",
+    "speaker_role": "Data & Persistence Engineer",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 21,
+      "confidence": 0.96
+    },
+    "text": "I will abstract persistence so we can switch between UserDefaults and CoreData.",
+    "tags": [
+      "persistence",
+      "abstraction",
+      "offline"
+    ],
+    "linked_items": [
+      "ticket:IOS-16"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:07:00Z",
+    "speaker_agent_id": "QALeadAgent",
+    "speaker_role": "QA & Test Automation Lead",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 17,
+      "confidence": 0.98
+    },
+    "text": "QA gate requires unit tests for all view models and lifecycle restoration checks.",
+    "tags": [
+      "qa",
+      "tests",
+      "quality-gate"
+    ],
+    "linked_items": [
+      "doc:test-plan-v1"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:08:00Z",
+    "speaker_agent_id": "SecurityComplianceAgent",
+    "speaker_role": "Security & Compliance Specialist",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 14,
+      "confidence": 0.97
+    },
+    "text": "Ensure no API keys are hard coded and privacy disclosures are prepared for submission.",
+    "tags": [
+      "security",
+      "privacy",
+      "compliance"
+    ],
+    "linked_items": [
+      "doc:privacy-checklist"
+    ]
+  },
+  {
+    "conversation_id": "conv-001",
+    "meeting_type": "kickoff",
+    "timestamp_utc": "2026-03-01T09:09:00Z",
+    "speaker_agent_id": "ReleaseManagerAgent",
+    "speaker_role": "Release Manager",
+    "audio_meta": {
+      "channel": "voice",
+      "duration_seconds": 16,
+      "confidence": 0.98
+    },
+    "text": "I will prepare metadata, screenshots, and App Store release notes in parallel.",
+    "tags": [
+      "release",
+      "app-store",
+      "pipeline"
+    ],
+    "linked_items": [
+      "ticket:IOS-30"
+    ]
+  }
+]

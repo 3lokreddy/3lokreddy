@@ -1,0 +1,77 @@
+{
+  "org_name": "iOS Agentic Studio",
+  "mode": "employee-style",
+  "manager": "ProgramManagerAgent",
+  "agents": [
+    {
+      "id": "ProgramManagerAgent",
+      "role": "Program Manager",
+      "focus": ["scope", "milestones", "handoffs", "status reporting"],
+      "reports_to": null,
+      "hands_off_to": ["ProductStrategistAgent", "TechLeadAgent", "QALeadAgent"]
+    },
+    {
+      "id": "ProductStrategistAgent",
+      "role": "Product Strategist",
+      "focus": ["requirements", "user stories", "acceptance criteria"],
+      "reports_to": "ProgramManagerAgent",
+      "hands_off_to": ["UXDesignerAgent", "TechLeadAgent"]
+    },
+    {
+      "id": "UXDesignerAgent",
+      "role": "UX/UI Designer",
+      "focus": ["flows", "wireframes", "component behavior", "copy tone"],
+      "reports_to": "ProductStrategistAgent",
+      "hands_off_to": ["SwiftUIEngineerAgent"]
+    },
+    {
+      "id": "TechLeadAgent",
+      "role": "iOS Tech Lead",
+      "focus": ["architecture", "coding standards", "technical decisions"],
+      "reports_to": "ProgramManagerAgent",
+      "hands_off_to": ["SwiftUIEngineerAgent", "NetworkingAgent", "DataPersistenceAgent"]
+    },
+    {
+      "id": "SwiftUIEngineerAgent",
+      "role": "SwiftUI Engineer",
+      "focus": ["view layer", "navigation", "state wiring", "accessibility"],
+      "reports_to": "TechLeadAgent",
+      "hands_off_to": ["QALeadAgent"]
+    },
+    {
+      "id": "NetworkingAgent",
+      "role": "API & Networking Engineer",
+      "focus": ["URLSession", "async-await", "retry", "error mapping"],
+      "reports_to": "TechLeadAgent",
+      "hands_off_to": ["SwiftUIEngineerAgent", "QALeadAgent"]
+    },
+    {
+      "id": "DataPersistenceAgent",
+      "role": "Data & Persistence Engineer",
+      "focus": ["local storage abstraction", "cache", "state restoration"],
+      "reports_to": "TechLeadAgent",
+      "hands_off_to": ["SwiftUIEngineerAgent", "QALeadAgent"]
+    },
+    {
+      "id": "QALeadAgent",
+      "role": "QA & Test Automation Lead",
+      "focus": ["unit tests", "integration tests", "regression gates"],
+      "reports_to": "ProgramManagerAgent",
+      "hands_off_to": ["ReleaseManagerAgent", "ProgramManagerAgent"]
+    },
+    {
+      "id": "SecurityComplianceAgent",
+      "role": "Security & Compliance Specialist",
+      "focus": ["privacy", "secret handling", "App Store policy checks"],
+      "reports_to": "ProgramManagerAgent",
+      "hands_off_to": ["ReleaseManagerAgent"]
+    },
+    {
+      "id": "ReleaseManagerAgent",
+      "role": "Release Manager",
+      "focus": ["build pipelines", "metadata", "submission checklist"],
+      "reports_to": "ProgramManagerAgent",
+      "hands_off_to": []
+    }
+  ]
+}

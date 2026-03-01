@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "MyApp",
+    "min_ios": "17.0",
+    "architecture": "MVVM",
+    "ui_framework": "SwiftUI",
+    "language": "Swift"
+  },
+  "folders": ["Core", "Features", "Shared", "Models", "Resources"],
+  "core_files": [
+    "Core/NetworkManager.swift",
+    "Core/APIEndpoints.swift",
+    "Core/AppEnvironment.swift"
+  ],
+  "shared_files": [
+    "Shared/ReusableComponents/.gitkeep",
+    "Shared/Extensions/.gitkeep",
+    "Shared/Helpers/.gitkeep"
+  ],
+  "model_files": ["Models/User.swift", "Models/APIResponse.swift"],
+  "features": [
+    {
+      "name": "Auth",
+      "files": [
+        "Features/Auth/AuthView.swift",
+        "Features/Auth/AuthViewModel.swift",
+        "Features/Auth/AuthService.swift",
+        "Features/Auth/AuthModel.swift"
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "files": [
+        "Features/Dashboard/DashboardView.swift",
+        "Features/Dashboard/DashboardViewModel.swift"
+      ]
+    }
+  ],
+  "quality_gates": [
+    "No business logic in Views",
+    "No UI code in ViewModels",
+    "Use async/await for network",
+    "Centralized API error mapping",
+    "Loading/Empty/Error states implemented"
+  ],
+  "lifecycle": {
+    "on_background": ["persist_unsaved_state", "cancel_network_calls"],
+    "on_restore": ["restore_session"]
+  },
+  "roadmap_30_day": {
+    "week_1": "Swift foundations",
+    "week_2": "SwiftUI core",
+    "week_3": "MVVM + networking",
+    "week_4": "production readiness + submission"
+  }
+}

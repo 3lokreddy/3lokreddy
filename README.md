@@ -1,7 +1,7 @@
-- 👋 Hi, I’m @3lokreddy
-- 👀 I’m interested in coding auto gpt
+- 👋 Hi, I’m 3lok
+- 👀 I love coding !!! 
 - 🌱 I’m currently doing things with AI
-- 💞️ I’m looking to collaborate on plugins and the power of ChatGPT
+- 💞️ I’m looking to collaborate on plugins and the power of ai models
 
 
 <!---

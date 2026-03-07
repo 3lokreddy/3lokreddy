@@ -6,11 +6,13 @@ import os
 
 # ─── API Keys (set via environment variables) ───────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+OPENAI_API_KEY    = os.environ.get("OPENAI_API_KEY", "")
 SHODAN_API_KEY    = os.environ.get("SHODAN_API_KEY", "")
 VIRUSTOTAL_KEY    = os.environ.get("VIRUSTOTAL_API_KEY", "")
 
 # ─── Agent Settings ──────────────────────────────────────────────────────────
-MODEL             = "claude-opus-4-6"
+MODEL             = "claude-opus-4-6"   # default Anthropic model
+OPENAI_MODEL      = "gpt-4o"           # default OpenAI model
 MAX_TOKENS        = 8192
 MAX_TOOL_ITERS    = 30          # hard cap on agentic loop iterations
 

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║          KALI OSINT AGENT  —  Powered by Claude Opus 4.6                 ║
+║          KALI OSINT AGENT  —  Multi-Provider AI Backend                  ║
 ║          Intelligent Open-Source Intelligence Gathering System            ║
 ╠═══════════════════════════════════════════════════════════════════════════╣
+║  Providers:                                                               ║
+║    anthropic — Claude Opus 4.6  (default)                                ║
+║    openai    — GPT-4o                                                     ║
+║                                                                           ║
 ║  Modes:                                                                   ║
 ║    passive  — No contact with target; third-party APIs & public data      ║
 ║    active   — Direct interaction with target (authorisation required)     ║
@@ -11,7 +15,8 @@
 ╚═══════════════════════════════════════════════════════════════════════════╝
 
 Usage:
-    python3 osint_agent.py [--mode passive|active|full] [--target <target>]
+    python3 osint_agent.py [--provider anthropic|openai]
+                           [--mode passive|active|full] [--target <target>]
                            [--task <task_description>] [--report]
 """
 
@@ -24,7 +29,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -33,7 +37,8 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from config import (ACTIVE, ANTHROPIC_API_KEY, FULL, MAX_TOKENS,
-                    MAX_TOOL_ITERS, MODEL, PASSIVE, REPORT_DIR)
+                    MAX_TOOL_ITERS, MODEL, OPENAI_API_KEY, OPENAI_MODEL,
+                    PASSIVE, REPORT_DIR)
 from tools.passive_recon import PASSIVE_TOOLS, PASSIVE_DISPATCH
 from tools.active_recon import ACTIVE_TOOLS, ACTIVE_DISPATCH
 
@@ -101,12 +106,28 @@ SYSTEM_MAP = {PASSIVE: SYSTEM_PASSIVE, ACTIVE: SYSTEM_ACTIVE, FULL: SYSTEM_FULL}
 ALL_DISPATCH = {**PASSIVE_DISPATCH, **ACTIVE_DISPATCH}
 
 def get_tools(mode: str) -> list[dict]:
-    """Return the tool schemas available for the selected mode."""
+    """Return the Claude-format tool schemas available for the selected mode."""
     if mode == PASSIVE:
         return PASSIVE_TOOLS
     if mode == ACTIVE:
         return ACTIVE_TOOLS
     return PASSIVE_TOOLS + ACTIVE_TOOLS   # FULL
+
+
+def _to_openai_tools(tools: list[dict]) -> list[dict]:
+    """Convert Claude input_schema format → OpenAI function-calling format."""
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "parameters": t.get("input_schema",
+                                    {"type": "object", "properties": {}}),
+            },
+        }
+        for t in tools
+    ]
 
 
 def execute_tool(tool_name: str, tool_input: dict) -> str:
@@ -168,7 +189,6 @@ def print_tool_call(name: str, inp: dict) -> None:
 def print_tool_result(name: str, result: str) -> None:
     colour = TOOL_COLOURS.get(name, "white")
     preview = result[:3000] + ("…[truncated]" if len(result) > 3000 else "")
-    # Try to pretty-print JSON
     try:
         parsed = json.loads(result)
         preview = json.dumps(parsed, indent=2)[:3000]
@@ -191,22 +211,12 @@ def print_assistant_message(text: str) -> None:
 # ─── Report Generator ─────────────────────────────────────────────────────────
 
 def save_report(target: str, mode: str, task: str,
-                conversation: list[dict], final_text: str) -> Path:
+                tool_runs: list[dict], final_text: str,
+                model_label: str) -> Path:
     """Write a Markdown report to the reports/ directory."""
     ts      = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe    = "".join(c if c.isalnum() or c in "-_" else "_" for c in target)
     fname   = Path(REPORT_DIR) / f"osint_{safe}_{mode}_{ts}.md"
-
-    tool_runs = []
-    for msg in conversation:
-        if msg.get("role") == "assistant":
-            for block in (msg.get("content") if isinstance(msg["content"], list)
-                          else []):
-                if isinstance(block, dict) and block.get("type") == "tool_use":
-                    tool_runs.append({
-                        "tool": block["name"],
-                        "input": block.get("input", {}),
-                    })
 
     md_lines = [
         f"# OSINT Report — {target}",
@@ -217,7 +227,7 @@ def save_report(target: str, mode: str, task: str,
         f"| Mode    | **{mode.upper()}** |",
         f"| Task    | {task} |",
         f"| Date    | {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')} |",
-        f"| Model   | {MODEL} |",
+        f"| Model   | {model_label} |",
         f"",
         f"## Tools Executed ({len(tool_runs)})",
         "",
@@ -233,58 +243,36 @@ def save_report(target: str, mode: str, task: str,
         final_text,
         "",
         "---",
-        f"*Generated by KALI OSINT AGENT — {MODEL}*",
+        f"*Generated by KALI OSINT AGENT — {model_label}*",
     ]
 
     fname.write_text("\n".join(md_lines), encoding="utf-8")
     return fname
 
 
-# ─── Core Agent Loop ──────────────────────────────────────────────────────────
+# ─── Anthropic Agent Loop ─────────────────────────────────────────────────────
 
-def run_agent(target: str, mode: str, task: str,
-              save: bool = False, interactive: bool = False) -> str:
-    """
-    Main agentic loop.
-    Returns the final text response from the model.
-    """
+def _run_anthropic(target: str, mode: str, task: str,
+                   save: bool, interactive: bool) -> str:
+    import anthropic as _anthropic
+
     if not ANTHROPIC_API_KEY:
         console.print("[bold red]ERROR:[/] ANTHROPIC_API_KEY is not set.\n"
                       "Export it: [cyan]export ANTHROPIC_API_KEY=sk-ant-...[/]")
         sys.exit(1)
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    tools  = get_tools(mode)
-    system = SYSTEM_MAP.get(mode, SYSTEM_FULL)
+    client    = _anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    tools     = get_tools(mode)
+    system    = SYSTEM_MAP.get(mode, SYSTEM_FULL)
+    model_lbl = MODEL
 
-    # ── Banner ────────────────────────────────────────────────────────────────
-    console.print(Panel.fit(
-        f"[bold bright_red]KALI OSINT AGENT[/]\n"
-        f"[yellow]Target:[/] {target}\n"
-        f"[yellow]Mode:[/]   {mode.upper()}\n"
-        f"[yellow]Task:[/]   {task}\n"
-        f"[yellow]Tools:[/]  {len(tools)} available\n"
-        f"[yellow]Model:[/]  {MODEL}",
-        title="[bold]⚡ OSINT AGENT INITIALISING[/]",
-        border_style="bright_red",
-    ))
+    _print_banner(target, mode, task, len(tools), model_lbl)
 
-    # Build initial prompt
-    initial_prompt = (
-        f"TARGET: {target}\n"
-        f"TASK: {task}\n\n"
-        f"Begin comprehensive OSINT reconnaissance in {mode.upper()} mode. "
-        f"Use all available tools systematically to gather maximum intelligence "
-        f"on the target. Chain findings together — if you find an IP, geolocate it "
-        f"and look up its ASN; if you find subdomains, resolve their IPs; "
-        f"if you find open ports, grab their banners. "
-        f"Think step-by-step and explain your reasoning between tool calls."
-    )
-
+    initial_prompt = _build_prompt(target, mode, task)
     messages: list[dict] = [{"role": "user", "content": initial_prompt}]
-    iteration       = 0
-    final_text      = ""
-    conversation    = []
+    iteration  = 0
+    final_text = ""
+    tool_runs: list[dict] = []
 
     while iteration < MAX_TOOL_ITERS:
         iteration += 1
@@ -302,62 +290,49 @@ def run_agent(target: str, mode: str, task: str,
                 messages=messages,
             )
 
-        # ── Process response content ──────────────────────────────────────
         assistant_content = response.content
-        conversation.append({"role": "assistant", "content": [
-            b.model_dump() if hasattr(b, "model_dump") else b
-            for b in assistant_content
-        ]})
         messages.append({"role": "assistant", "content": assistant_content})
 
-        # Print any text blocks
-        text_blocks = [b for b in assistant_content if b.type == "text"]
         thinking_blocks = [b for b in assistant_content if b.type == "thinking"]
-
         if thinking_blocks:
-            console.print(f"[dim]💭 Extended thinking: {len(thinking_blocks[0].thinking)} chars[/]")
+            console.print(f"[dim]💭 Extended thinking: "
+                          f"{len(thinking_blocks[0].thinking)} chars[/]")
 
-        for tb in text_blocks:
+        for tb in [b for b in assistant_content if b.type == "text"]:
             print_assistant_message(tb.text)
-            final_text = tb.text   # keep latest
+            final_text = tb.text
 
-        # ── Done? ─────────────────────────────────────────────────────────
         if response.stop_reason == "end_turn":
             console.print("[bold green]✓ Agent completed analysis.[/]")
             break
 
         if response.stop_reason == "pause_turn":
-            # Server-side tool loop hit limit — re-send to continue
             messages = [
                 {"role": "user", "content": initial_prompt},
                 {"role": "assistant", "content": assistant_content},
             ]
             continue
 
-        # ── Execute tool calls ────────────────────────────────────────────
         tool_use_blocks = [b for b in assistant_content if b.type == "tool_use"]
         if not tool_use_blocks:
             console.print("[yellow]No tool calls and not end_turn — breaking.[/]")
             break
 
         tool_results = []
-        for tool_block in tool_use_blocks:
-            print_tool_call(tool_block.name, tool_block.input)
-
+        for tb in tool_use_blocks:
+            print_tool_call(tb.name, tb.input)
             start = time.time()
             with Progress(SpinnerColumn(),
-                          TextColumn(f"[yellow]Running {tool_block.name}…"),
+                          TextColumn(f"[yellow]Running {tb.name}…"),
                           console=console, transient=True) as p:
                 p.add_task("", total=None)
-                result_str = execute_tool(tool_block.name, tool_block.input)
-            elapsed = time.time() - start
-
-            console.print(f"[dim]  ⏱  {elapsed:.1f}s[/]")
-            print_tool_result(tool_block.name, result_str)
-
+                result_str = execute_tool(tb.name, tb.input)
+            console.print(f"[dim]  ⏱  {time.time() - start:.1f}s[/]")
+            print_tool_result(tb.name, result_str)
+            tool_runs.append({"tool": tb.name, "input": tb.input})
             tool_results.append({
                 "type": "tool_result",
-                "tool_use_id": tool_block.id,
+                "tool_use_id": tb.id,
                 "content": result_str,
             })
 
@@ -366,21 +341,20 @@ def run_agent(target: str, mode: str, task: str,
     else:
         console.print(f"[yellow]⚠ Max iterations ({MAX_TOOL_ITERS}) reached.[/]")
 
-    # ── Interactive follow-up ─────────────────────────────────────────────
     if interactive:
-        _interactive_loop(client, tools, system, messages, conversation)
+        _interactive_loop_anthropic(client, tools, system, messages)
 
-    # ── Save report ───────────────────────────────────────────────────────
     if save and final_text:
-        report_path = save_report(target, mode, task, conversation, final_text)
-        console.print(f"\n[bold green]📄 Report saved:[/] {report_path}")
+        path = save_report(target, mode, task, tool_runs, final_text, model_lbl)
+        console.print(f"\n[bold green]📄 Report saved:[/] {path}")
 
     return final_text
 
 
-def _interactive_loop(client: anthropic.Anthropic, tools: list,
-                      system: str, messages: list, conversation: list) -> None:
-    """Follow-up Q&A mode after initial recon completes."""
+def _interactive_loop_anthropic(client, tools, system, messages) -> None:
+    """Follow-up Q&A using Anthropic Claude."""
+    import anthropic as _anthropic
+
     console.print(Panel(
         "[bold]Interactive mode — ask follow-up questions or request specific tools.\n"
         "Type [red]exit[/] or [red]quit[/] to finish.[/]",
@@ -393,30 +367,19 @@ def _interactive_loop(client: anthropic.Anthropic, tools: list,
             user_input = console.input("\n[bold cyan]You:[/] ").strip()
         except (KeyboardInterrupt, EOFError):
             break
-
         if user_input.lower() in ("exit", "quit", "q"):
             break
         if not user_input:
             continue
 
         messages.append({"role": "user", "content": user_input})
-
         response = client.messages.create(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
+            model=MODEL, max_tokens=MAX_TOKENS,
             thinking={"type": "adaptive"},
-            system=system,
-            tools=tools,
-            messages=messages,
+            system=system, tools=tools, messages=messages,
         )
-
         messages.append({"role": "assistant", "content": response.content})
-        conversation.append({"role": "assistant", "content": [
-            b.model_dump() if hasattr(b, "model_dump") else b
-            for b in response.content
-        ]})
 
-        # Handle tool calls in interactive mode
         while response.stop_reason == "tool_use":
             tool_results = []
             for b in response.content:
@@ -434,18 +397,245 @@ def _interactive_loop(client: anthropic.Anthropic, tools: list,
 
             messages.append({"role": "user", "content": tool_results})
             response = client.messages.create(
-                model=MODEL,
-                max_tokens=MAX_TOKENS,
+                model=MODEL, max_tokens=MAX_TOKENS,
                 thinking={"type": "adaptive"},
-                system=system,
-                tools=tools,
-                messages=messages,
+                system=system, tools=tools, messages=messages,
             )
             messages.append({"role": "assistant", "content": response.content})
 
         for b in response.content:
             if b.type == "text" and b.text:
                 print_assistant_message(b.text)
+
+
+# ─── OpenAI Agent Loop ────────────────────────────────────────────────────────
+
+def _run_openai(target: str, mode: str, task: str,
+                save: bool, interactive: bool) -> str:
+    from openai import OpenAI
+
+    if not OPENAI_API_KEY:
+        console.print("[bold red]ERROR:[/] OPENAI_API_KEY is not set.\n"
+                      "Export it: [cyan]export OPENAI_API_KEY=sk-...[/]")
+        sys.exit(1)
+
+    client    = OpenAI(api_key=OPENAI_API_KEY)
+    tools     = get_tools(mode)
+    oai_tools = _to_openai_tools(tools)
+    system    = SYSTEM_MAP.get(mode, SYSTEM_FULL)
+    model_lbl = OPENAI_MODEL
+
+    _print_banner(target, mode, task, len(tools), model_lbl)
+
+    initial_prompt = _build_prompt(target, mode, task)
+    messages: list[dict] = [
+        {"role": "system", "content": system},
+        {"role": "user",   "content": initial_prompt},
+    ]
+    iteration  = 0
+    final_text = ""
+    tool_runs: list[dict] = []
+
+    while iteration < MAX_TOOL_ITERS:
+        iteration += 1
+        console.rule(f"[dim]Iteration {iteration}/{MAX_TOOL_ITERS}[/]")
+
+        with Progress(SpinnerColumn(), TextColumn("[cyan]{task.description}"),
+                      console=console, transient=True) as progress:
+            progress.add_task("GPT-4o is thinking…", total=None)
+            response = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                max_tokens=MAX_TOKENS,
+                tools=oai_tools,
+                tool_choice="auto",
+                messages=messages,
+            )
+
+        choice = response.choices[0]
+        msg    = choice.message
+
+        # Append assistant turn as a plain dict (serialisable)
+        assistant_dict: dict = {"role": "assistant"}
+        if msg.content:
+            assistant_dict["content"] = msg.content
+        if msg.tool_calls:
+            assistant_dict["tool_calls"] = [
+                {
+                    "id":       tc.id,
+                    "type":     "function",
+                    "function": {
+                        "name":      tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in msg.tool_calls
+            ]
+        messages.append(assistant_dict)
+
+        if msg.content:
+            print_assistant_message(msg.content)
+            final_text = msg.content
+
+        if choice.finish_reason == "stop":
+            console.print("[bold green]✓ Agent completed analysis.[/]")
+            break
+
+        if choice.finish_reason != "tool_calls" or not msg.tool_calls:
+            console.print("[yellow]Unexpected finish_reason — breaking.[/]")
+            break
+
+        # Execute tool calls
+        for tc in msg.tool_calls:
+            name = tc.function.name
+            try:
+                inp = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                inp = {}
+
+            print_tool_call(name, inp)
+            start = time.time()
+            with Progress(SpinnerColumn(),
+                          TextColumn(f"[yellow]Running {name}…"),
+                          console=console, transient=True) as p:
+                p.add_task("", total=None)
+                result_str = execute_tool(name, inp)
+            console.print(f"[dim]  ⏱  {time.time() - start:.1f}s[/]")
+            print_tool_result(name, result_str)
+            tool_runs.append({"tool": name, "input": inp})
+
+            messages.append({
+                "role":         "tool",
+                "tool_call_id": tc.id,
+                "content":      result_str,
+            })
+
+    else:
+        console.print(f"[yellow]⚠ Max iterations ({MAX_TOOL_ITERS}) reached.[/]")
+
+    if interactive:
+        _interactive_loop_openai(client, oai_tools, messages)
+
+    if save and final_text:
+        path = save_report(target, mode, task, tool_runs, final_text, model_lbl)
+        console.print(f"\n[bold green]📄 Report saved:[/] {path}")
+
+    return final_text
+
+
+def _interactive_loop_openai(client, oai_tools, messages) -> None:
+    """Follow-up Q&A using OpenAI GPT-4o."""
+    from openai import OpenAI
+
+    console.print(Panel(
+        "[bold]Interactive mode — ask follow-up questions or request specific tools.\n"
+        "Type [red]exit[/] or [red]quit[/] to finish.[/]",
+        title="[bold cyan]💬 Interactive Follow-Up[/]",
+        border_style="cyan",
+    ))
+
+    while True:
+        try:
+            user_input = console.input("\n[bold cyan]You:[/] ").strip()
+        except (KeyboardInterrupt, EOFError):
+            break
+        if user_input.lower() in ("exit", "quit", "q"):
+            break
+        if not user_input:
+            continue
+
+        messages.append({"role": "user", "content": user_input})
+
+        while True:
+            response = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                max_tokens=MAX_TOKENS,
+                tools=oai_tools,
+                tool_choice="auto",
+                messages=messages,
+            )
+            choice = response.choices[0]
+            msg    = choice.message
+
+            assistant_dict: dict = {"role": "assistant"}
+            if msg.content:
+                assistant_dict["content"] = msg.content
+            if msg.tool_calls:
+                assistant_dict["tool_calls"] = [
+                    {
+                        "id": tc.id, "type": "function",
+                        "function": {"name": tc.function.name,
+                                     "arguments": tc.function.arguments},
+                    }
+                    for tc in msg.tool_calls
+                ]
+            messages.append(assistant_dict)
+
+            if msg.content:
+                print_assistant_message(msg.content)
+
+            if choice.finish_reason == "stop":
+                break
+
+            if choice.finish_reason == "tool_calls" and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    name = tc.function.name
+                    try:
+                        inp = json.loads(tc.function.arguments)
+                    except json.JSONDecodeError:
+                        inp = {}
+                    print_tool_call(name, inp)
+                    result_str = execute_tool(name, inp)
+                    print_tool_result(name, result_str)
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result_str,
+                    })
+            else:
+                break
+
+
+# ─── Shared Helpers ───────────────────────────────────────────────────────────
+
+def _build_prompt(target: str, mode: str, task: str) -> str:
+    return (
+        f"TARGET: {target}\n"
+        f"TASK: {task}\n\n"
+        f"Begin comprehensive OSINT reconnaissance in {mode.upper()} mode. "
+        f"Use all available tools systematically to gather maximum intelligence "
+        f"on the target. Chain findings together — if you find an IP, geolocate it "
+        f"and look up its ASN; if you find subdomains, resolve their IPs; "
+        f"if you find open ports, grab their banners. "
+        f"Think step-by-step and explain your reasoning between tool calls."
+    )
+
+
+def _print_banner(target: str, mode: str, task: str,
+                  tool_count: int, model_lbl: str) -> None:
+    console.print(Panel.fit(
+        f"[bold bright_red]KALI OSINT AGENT[/]\n"
+        f"[yellow]Target:[/] {target}\n"
+        f"[yellow]Mode:[/]   {mode.upper()}\n"
+        f"[yellow]Task:[/]   {task}\n"
+        f"[yellow]Tools:[/]  {tool_count} available\n"
+        f"[yellow]Model:[/]  {model_lbl}",
+        title="[bold]⚡ OSINT AGENT INITIALISING[/]",
+        border_style="bright_red",
+    ))
+
+
+# ─── Public Entry Point ───────────────────────────────────────────────────────
+
+def run_agent(target: str, mode: str, task: str,
+              provider: str = "anthropic",
+              save: bool = False, interactive: bool = False) -> str:
+    """
+    Main entry point. Dispatches to the Anthropic or OpenAI backend.
+    Returns the final text response from the model.
+    """
+    if provider == "openai":
+        return _run_openai(target, mode, task, save, interactive)
+    return _run_anthropic(target, mode, task, save, interactive)
 
 
 # ─── CLI Entry Point ──────────────────────────────────────────────────────────
@@ -456,20 +646,20 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""
         Examples:
-          # Passive recon on a domain
+          # Passive recon with Claude (default)
           python3 osint_agent.py --target example.com --mode passive
 
-          # Full OSINT campaign with report
-          python3 osint_agent.py --target example.com --mode full --report
+          # Passive recon with GPT-4o
+          python3 osint_agent.py --target example.com --mode passive --provider openai
 
-          # Active port scan + web fingerprint
-          python3 osint_agent.py --target 1.2.3.4 --mode active --task "Find all open ports and fingerprint the web server"
+          # Full OSINT campaign with report (OpenAI)
+          python3 osint_agent.py --target example.com --mode full --report --provider openai
 
-          # Custom task with interactive follow-up
-          python3 osint_agent.py --target company.com --mode passive --task "Find all email addresses and subdomains" --interactive
+          # Active port scan + web fingerprint (Claude)
+          python3 osint_agent.py --target 1.2.3.4 --mode active --task "Find all open ports"
 
-          # IP intelligence
-          python3 osint_agent.py --target 8.8.8.8 --mode passive --task "Full IP intelligence: geolocation, ASN, reverse DNS, Shodan"
+          # Interactive follow-up (GPT-4o)
+          python3 osint_agent.py --target company.com --mode passive --interactive --provider openai
         """),
     )
     parser.add_argument("--target", "-t", required=False,
@@ -478,6 +668,11 @@ def main() -> None:
                         choices=[PASSIVE, ACTIVE, FULL],
                         default=PASSIVE,
                         help="Recon mode (default: passive)")
+    parser.add_argument("--provider", "-p",
+                        choices=["anthropic", "openai"],
+                        default="anthropic",
+                        help="AI provider: anthropic (Claude) or openai (GPT-4o). "
+                             "Default: anthropic")
     parser.add_argument("--task", "-T",
                         default="Perform comprehensive OSINT reconnaissance and map the full attack surface.",
                         help="Specific intelligence task or question")
@@ -499,7 +694,6 @@ def main() -> None:
         console.print("\n[red]Error: --target is required.[/]")
         sys.exit(1)
 
-    # Warn on active mode
     if args.mode in (ACTIVE, FULL):
         console.print(Panel(
             "[bold yellow]⚠  WARNING — ACTIVE RECONNAISSANCE[/]\n\n"
@@ -524,6 +718,7 @@ def main() -> None:
         target=args.target,
         mode=args.mode,
         task=args.task,
+        provider=args.provider,
         save=args.report,
         interactive=args.interactive,
     )
@@ -539,7 +734,6 @@ def _print_tool_list() -> None:
     table.add_column("Description", style="white")
 
     passive_names = {t["name"] for t in PASSIVE_TOOLS}
-    active_names  = {t["name"] for t in ACTIVE_TOOLS}
 
     for i, tool in enumerate(ALL_TOOLS, 1):
         mode_tag = ("[green]PASSIVE[/]" if tool["name"] in passive_names

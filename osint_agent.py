@@ -194,7 +194,7 @@ def save_report(target: str, mode: str, task: str,
                 conversation: list[dict], final_text: str) -> Path:
     """Write a Markdown report to the reports/ directory."""
     ts      = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe    = "".join(c if c.isalnum() or c in ".-_" else "_" for c in target)
+    safe    = "".join(c if c.isalnum() or c in "-_" else "_" for c in target)
     fname   = Path(REPORT_DIR) / f"osint_{safe}_{mode}_{ts}.md"
 
     tool_runs = []
